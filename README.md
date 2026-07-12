@@ -81,6 +81,7 @@ src-tauri/
 
 - [ ] OAuth Device Flow auth (for distribution)
 - [x] Store token in the OS keychain (`keyring` crate)
+- [x] Launch at login (`tauri-plugin-autostart`, toggle in Settings)
 - [ ] Edit card title / assignees / other fields, not just Status
 - [ ] Create draft issues from the panel
 - [ ] Global hotkey to toggle the panel

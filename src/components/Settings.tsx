@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { verifyToken } from "../lib/github";
 
 interface Props {
@@ -11,6 +12,22 @@ export function Settings({ initialToken, onSaved, onCancel }: Props) {
   const [token, setToken] = useState(initialToken);
   const [status, setStatus] = useState<"idle" | "checking" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [autostart, setAutostart] = useState(false);
+
+  useEffect(() => {
+    isEnabled()
+      .then(setAutostart)
+      .catch(() => {});
+  }, []);
+
+  async function toggleAutostart(next: boolean) {
+    setAutostart(next); // optimistic
+    try {
+      await (next ? enable() : disable());
+    } catch {
+      setAutostart(!next); // revert on failure
+    }
+  }
 
   async function handleSave() {
     setStatus("checking");
@@ -50,6 +67,18 @@ export function Settings({ initialToken, onSaved, onCancel }: Props) {
           {message}
         </p>
       )}
+
+      <label className="mt-1 flex cursor-pointer items-center gap-2 border-t border-black/10 pt-3 dark:border-white/10">
+        <input
+          type="checkbox"
+          checked={autostart}
+          onChange={(e) => toggleAutostart(e.target.checked)}
+        />
+        <span className="text-xs text-neutral-600 dark:text-neutral-300">
+          ログイン時に自動起動する
+        </span>
+      </label>
+
       <div className="mt-auto flex gap-2">
         <button
           onClick={handleSave}
