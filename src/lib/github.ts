@@ -191,3 +191,34 @@ export async function updateCardStatus(
     option: optionId,
   });
 }
+
+const ADD_DRAFT_MUTATION = gql`
+  mutation ($project: ID!, $title: String!) {
+    addProjectV2DraftIssue(input: { projectId: $project, title: $title }) {
+      projectItem {
+        id
+      }
+    }
+  }
+`;
+
+/**
+ * Add a task as a draft issue. If a status field + option are given, the new
+ * item is moved into that column right after creation.
+ */
+export async function addTask(
+  token: string,
+  projectId: string,
+  title: string,
+  fieldId: string | null,
+  optionId: string | null
+): Promise<void> {
+  const data = await client(token).request<{
+    addProjectV2DraftIssue: { projectItem: { id: string } };
+  }>(ADD_DRAFT_MUTATION, { project: projectId, title });
+
+  const itemId = data.addProjectV2DraftIssue.projectItem.id;
+  if (fieldId && optionId) {
+    await updateCardStatus(token, projectId, itemId, fieldId, optionId);
+  }
+}

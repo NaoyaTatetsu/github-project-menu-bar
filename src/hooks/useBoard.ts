@@ -3,7 +3,12 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { fetchBoard, listProjects, updateCardStatus } from "../lib/github";
+import {
+  addTask,
+  fetchBoard,
+  listProjects,
+  updateCardStatus,
+} from "../lib/github";
 import type { BoardData } from "../types";
 
 export function useProjects(token: string | null) {
@@ -59,6 +64,24 @@ export function useUpdateStatus(
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useAddTask(token: string | null, projectId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      title,
+      fieldId,
+      optionId,
+    }: {
+      title: string;
+      fieldId: string | null;
+      optionId: string | null;
+    }) => addTask(token!, projectId!, title, fieldId, optionId),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["board", projectId] });
     },
   });
 }

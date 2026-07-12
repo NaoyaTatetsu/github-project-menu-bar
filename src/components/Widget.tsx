@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Board } from "./Board";
-import { useBoard, useUpdateStatus } from "../hooks/useBoard";
+import { useAddTask, useBoard, useUpdateStatus } from "../hooks/useBoard";
 import { getSelectedProjectId, getToken } from "../lib/store";
 
 /**
@@ -26,6 +26,7 @@ export default function Widget() {
 
   const board = useBoard(token, projectId);
   const updateStatus = useUpdateStatus(token, projectId);
+  const addTask = useAddTask(token, projectId);
 
   return (
     <div className="flex h-screen flex-col text-neutral-800 dark:text-neutral-100">
@@ -80,6 +81,13 @@ export default function Widget() {
             board={board.data}
             onMove={(itemId, fieldId, optionId) =>
               updateStatus.mutate({ itemId, fieldId, optionId })
+            }
+            onAddTask={(title, optionId) =>
+              addTask.mutate({
+                title,
+                fieldId: board.data!.statusFieldId,
+                optionId,
+              })
             }
           />
         )}

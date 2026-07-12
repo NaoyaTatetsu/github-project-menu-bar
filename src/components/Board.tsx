@@ -8,9 +8,11 @@ const NO_STATUS = "__none__";
 interface Props {
   board: BoardData;
   onMove: (itemId: string, fieldId: string, optionId: string) => void;
+  /** optionId is null when adding to the "No Status" column */
+  onAddTask?: (title: string, optionId: string | null) => void;
 }
 
-export function Board({ board, onMove }: Props) {
+export function Board({ board, onMove, onAddTask }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
@@ -58,10 +60,16 @@ export function Board({ board, onMove }: Props) {
             id={opt.id}
             title={opt.name}
             cards={columns.get(opt.id) ?? []}
+            onAdd={onAddTask ? (title) => onAddTask(title, opt.id) : undefined}
           />
         ))}
         {noStatusCards.length > 0 && (
-          <Column id={NO_STATUS} title="No Status" cards={noStatusCards} />
+          <Column
+            id={NO_STATUS}
+            title="No Status"
+            cards={noStatusCards}
+            onAdd={onAddTask ? (title) => onAddTask(title, null) : undefined}
+          />
         )}
       </div>
     </DndContext>

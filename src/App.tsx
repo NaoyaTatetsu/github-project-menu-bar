@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Board } from "./components/Board";
 import { Settings } from "./components/Settings";
-import { useBoard, useProjects, useUpdateStatus } from "./hooks/useBoard";
+import {
+  useAddTask,
+  useBoard,
+  useProjects,
+  useUpdateStatus,
+} from "./hooks/useBoard";
 import {
   getSelectedProjectId,
   getToken,
@@ -40,6 +45,7 @@ export default function App() {
   const projects = useProjects(token);
   const board = useBoard(token, projectId);
   const updateStatus = useUpdateStatus(token, projectId);
+  const addTask = useAddTask(token, projectId);
 
   // auto-select first project once loaded
   useEffect(() => {
@@ -126,6 +132,12 @@ export default function App() {
         </button>
       </div>
 
+      {(addTask.error || updateStatus.error) && (
+        <div className="border-b border-red-500/20 bg-red-500/10 px-3 py-1 text-[11px] text-red-600 dark:text-red-400">
+          {((addTask.error || updateStatus.error) as Error).message}
+        </div>
+      )}
+
       {/* body */}
       <div className="flex-1 overflow-hidden">
         {projects.isError && (
@@ -148,6 +160,13 @@ export default function App() {
             board={board.data}
             onMove={(itemId, fieldId, optionId) =>
               updateStatus.mutate({ itemId, fieldId, optionId })
+            }
+            onAddTask={(title, optionId) =>
+              addTask.mutate({
+                title,
+                fieldId: board.data!.statusFieldId,
+                optionId,
+              })
             }
           />
         )}
