@@ -102,16 +102,27 @@ export default function App() {
         <button
           onClick={toggleWidget}
           title="Toggle desktop widget"
-          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
         >
-          🪟
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M3 9h18" />
+          </svg>
         </button>
         <button
           onClick={() => setShowSettings(true)}
           title="Settings"
-          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
         >
-          ⚙
+          <span className="text-lg leading-none">⚙</span>
         </button>
       </div>
 

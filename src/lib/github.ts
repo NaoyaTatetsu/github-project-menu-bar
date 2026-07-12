@@ -29,6 +29,7 @@ const PROJECTS_QUERY = gql`
           id
           title
           number
+          closed
         }
       }
     }
@@ -37,9 +38,14 @@ const PROJECTS_QUERY = gql`
 
 export async function listProjects(token: string): Promise<ProjectSummary[]> {
   const data = await client(token).request<{
-    viewer: { projectsV2: { nodes: ProjectSummary[] } };
+    viewer: {
+      projectsV2: { nodes: (ProjectSummary & { closed: boolean })[] };
+    };
   }>(PROJECTS_QUERY, { first: 30 });
-  return data.viewer.projectsV2.nodes;
+  // hide closed projects
+  return data.viewer.projectsV2.nodes
+    .filter((p) => !p.closed)
+    .map(({ id, title, number }) => ({ id, title, number }));
 }
 
 const BOARD_QUERY = gql`
