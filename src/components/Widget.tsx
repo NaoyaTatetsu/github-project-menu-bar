@@ -43,9 +43,12 @@ export default function Widget() {
         <button
           onClick={() => board.refetch()}
           title="Refresh"
-          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
+          disabled={board.isFetching}
+          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 disabled:hover:bg-transparent dark:text-neutral-300 dark:hover:bg-white/15"
         >
-          ↻
+          <span className={board.isFetching ? "inline-block animate-spin" : "inline-block"}>
+            ↻
+          </span>
         </button>
         <button
           onClick={() => getCurrentWindow().hide()}
