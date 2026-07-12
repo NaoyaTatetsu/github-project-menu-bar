@@ -15,15 +15,15 @@ export function Column({ id, title, cards }: Props) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-44 shrink-0 flex-col rounded-lg bg-black/5 p-2 dark:bg-white/5 ${
-        isOver ? "ring-2 ring-blue-400" : ""
+      className={`flex w-44 shrink-0 flex-col rounded-xl bg-black/[0.03] p-2 transition dark:bg-white/[0.04] ${
+        isOver ? "ring-2 ring-blue-500/60" : ""
       }`}
     >
       <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {title}
         </span>
-        <span className="rounded-full bg-black/10 px-1.5 text-[10px] text-neutral-500 dark:bg-white/10">
+        <span className="rounded-full bg-black/[0.06] px-1.5 text-[10px] tabular-nums text-neutral-500 dark:bg-white/10 dark:text-neutral-400">
           {cards.length}
         </span>
       </div>

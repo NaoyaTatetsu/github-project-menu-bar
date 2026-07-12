@@ -63,6 +63,12 @@ bun tauri build
 
 Produces a `.app` / `.dmg` under `src-tauri/target/release/bundle/`. For distribution outside the App Store you'll need to **codesign + notarize** with an Apple Developer ID.
 
+> The frosted-glass look uses window vibrancy, which requires `macOSPrivateApi`
+> + transparent windows. This is fine for **Developer ID / DMG** distribution
+> but **not allowed on the Mac App Store**. To target the App Store, drop
+> `macOSPrivateApi`, set the windows back to `transparent: false`, remove the
+> `window-vibrancy` calls, and give the windows an opaque background.
+
 ## Project layout
 
 ```
@@ -70,7 +76,7 @@ src/                 React frontend
   lib/github.ts      Projects v2 GraphQL queries & mutations
   lib/store.ts       keychain-backed token + selected-project persistence
   hooks/useBoard.ts  react-query data hooks (optimistic status updates)
-  components/        Board / Column / Card / Settings
+  components/        Board / Column / Card / Settings / Widget
 src-tauri/
   src/lib.rs         tray icon + panel toggle, dock hidden, keychain commands
   tauri.conf.json    frameless, transparent, always-on-top panel window
@@ -82,6 +88,7 @@ src-tauri/
 - [ ] OAuth Device Flow auth (for distribution)
 - [x] Store token in the OS keychain (`keyring` crate)
 - [x] Launch at login (`tauri-plugin-autostart`, toggle in Settings)
+- [x] Desktop widget window (frameless, always-on-top board summary; toggle from tray)
 - [ ] Edit card title / assignees / other fields, not just Status
 - [ ] Create draft issues from the panel
 - [ ] Global hotkey to toggle the panel

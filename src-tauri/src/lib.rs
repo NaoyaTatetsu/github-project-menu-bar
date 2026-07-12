@@ -59,8 +59,37 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
+            // Frosted-glass background + rounded corners for the native menu look.
+            #[cfg(target_os = "macos")]
+            {
+                use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+                if let Some(win) = app.get_webview_window(PANEL) {
+                    let _ = apply_vibrancy(
+                        &win,
+                        NSVisualEffectMaterial::Popover,
+                        Some(NSVisualEffectState::Active),
+                        Some(12.0),
+                    );
+                }
+                if let Some(win) = app.get_webview_window("widget") {
+                    let _ = apply_vibrancy(
+                        &win,
+                        NSVisualEffectMaterial::HudWindow,
+                        Some(NSVisualEffectState::Active),
+                        Some(12.0),
+                    );
+                }
+            }
+
+            let toggle_widget = MenuItem::with_id(
+                app,
+                "toggle_widget",
+                "Show/Hide Desktop Widget",
+                true,
+                None::<&str>,
+            )?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit])?;
+            let menu = Menu::with_items(app, &[&toggle_widget, &quit])?;
 
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .icon(tauri::include_image!("icons/tray.png"))
@@ -69,10 +98,19 @@ pub fn run() {
                 .menu(&menu)
                 // left click toggles the panel; right click shows the menu
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| {
-                    if event.id.as_ref() == "quit" {
-                        app.exit(0);
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => app.exit(0),
+                    "toggle_widget" => {
+                        if let Some(w) = app.get_webview_window("widget") {
+                            if w.is_visible().unwrap_or(false) {
+                                let _ = w.hide();
+                            } else {
+                                let _ = w.show();
+                                let _ = w.set_focus();
+                            }
+                        }
                     }
+                    _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
                     tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);

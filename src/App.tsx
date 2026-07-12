@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Board } from "./components/Board";
 import { Settings } from "./components/Settings";
 import { useBoard, useProjects, useUpdateStatus } from "./hooks/useBoard";
@@ -8,6 +9,17 @@ import {
   setSelectedProjectId,
   setToken as persistToken,
 } from "./lib/store";
+
+async function toggleWidget() {
+  const w = await WebviewWindow.getByLabel("widget");
+  if (!w) return;
+  if (await w.isVisible()) {
+    await w.hide();
+  } else {
+    await w.show();
+    await w.setFocus();
+  }
+}
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -57,16 +69,19 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-neutral-50 dark:bg-neutral-900">
+    <div className="flex h-full flex-col text-neutral-800 dark:text-neutral-100">
       {/* header */}
-      <div className="flex items-center gap-2 border-b border-black/10 px-3 py-2 dark:border-white/10">
+      <div
+        data-tauri-drag-region
+        className="flex items-center gap-1.5 border-b border-black/5 px-2.5 py-1.5 dark:border-white/10"
+      >
         <select
           value={projectId ?? ""}
           onChange={(e) => {
             setProjectId(e.target.value);
             void setSelectedProjectId(e.target.value);
           }}
-          className="flex-1 truncate rounded-md border border-black/15 bg-white px-2 py-1 text-xs dark:border-white/15 dark:bg-neutral-800"
+          className="flex-1 truncate rounded-md border border-black/10 bg-white/60 px-2 py-1 text-xs font-medium backdrop-blur transition hover:bg-white/80 focus:outline-none dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/[0.15]"
         >
           {projects.data?.map((p) => (
             <option key={p.id} value={p.id}>
@@ -77,14 +92,21 @@ export default function App() {
         <button
           onClick={() => board.refetch()}
           title="Refresh"
-          className="rounded-md px-2 py-1 text-xs hover:bg-black/5 dark:hover:bg-white/10"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
         >
           ↻
         </button>
         <button
+          onClick={toggleWidget}
+          title="Toggle desktop widget"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
+        >
+          🪟
+        </button>
+        <button
           onClick={() => setShowSettings(true)}
           title="Settings"
-          className="rounded-md px-2 py-1 text-xs hover:bg-black/5 dark:hover:bg-white/10"
+          className="flex h-6 w-6 items-center justify-center rounded-md text-xs text-neutral-500 transition hover:bg-black/10 dark:text-neutral-300 dark:hover:bg-white/15"
         >
           ⚙
         </button>

@@ -56,7 +56,7 @@ export function Settings({ initialToken, onSaved, onCancel }: Props) {
         value={token}
         onChange={(e) => setToken(e.target.value)}
         placeholder="github_pat_..."
-        className="rounded-md border border-black/15 bg-white px-2 py-1.5 font-mono text-xs dark:border-white/15 dark:bg-neutral-800"
+        className="rounded-md border border-black/10 bg-white/60 px-2 py-1.5 font-mono text-xs backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-white/10 dark:bg-white/10"
       />
       {message && (
         <p

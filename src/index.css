@@ -18,13 +18,9 @@ body {
     -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI",
     system-ui, sans-serif;
   overflow: hidden;
-  background: #fafafa;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #171717;
-  }
+  /* transparent so the native NSVisualEffectView (vibrancy) shows through */
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* thin scrollbars for the compact panel */

@@ -26,7 +26,7 @@ export function Card({ card }: { card: BoardCard }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group cursor-grab rounded-md border border-black/10 bg-white p-2 text-xs shadow-sm active:cursor-grabbing dark:border-white/10 dark:bg-neutral-800"
+      className="group cursor-grab rounded-lg border border-black/5 bg-white/70 p-2 text-xs shadow-sm backdrop-blur-sm transition hover:bg-white/90 hover:shadow active:cursor-grabbing dark:border-white/10 dark:bg-white/[0.08] dark:hover:bg-white/[0.12]"
     >
       <div className="flex items-start gap-1.5">
         <span
