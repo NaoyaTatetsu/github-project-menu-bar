@@ -1,5 +1,10 @@
 import { ClientError, GraphQLClient, gql } from "graphql-request";
-import type { BoardCard, BoardData, ProjectSummary } from "../types";
+import type {
+  BoardCard,
+  BoardData,
+  ProjectSummary,
+  SortSpec,
+} from "../types";
 
 const ENDPOINT = "https://api.github.com/graphql";
 
@@ -62,10 +67,31 @@ const BOARD_QUERY = gql`
             }
           }
         }
+        views(first: 10) {
+          nodes {
+            layout
+            sortByFields(first: 10) {
+              nodes {
+                direction
+                field {
+                  __typename
+                  ... on ProjectV2FieldCommon {
+                    name
+                    dataType
+                  }
+                  ... on ProjectV2SingleSelectField {
+                    options {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         items(first: 100) {
           nodes {
             id
-            type
             content {
               __typename
               ... on Issue {
@@ -87,6 +113,51 @@ const BOARD_QUERY = gql`
                 optionId
               }
             }
+            fieldValues(first: 30) {
+              nodes {
+                __typename
+                ... on ProjectV2ItemFieldTextValue {
+                  text
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldNumberValue {
+                  number
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldDateValue {
+                  date
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldSingleSelectValue {
+                  optionId
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldIterationValue {
+                  startDate
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -94,10 +165,36 @@ const BOARD_QUERY = gql`
   }
 `;
 
+interface RawFieldValue {
+  __typename: string;
+  text?: string;
+  number?: number;
+  date?: string;
+  optionId?: string;
+  startDate?: string;
+  field?: { name?: string };
+}
+
+interface RawSortByField {
+  direction: "ASC" | "DESC";
+  field: {
+    __typename: string;
+    name?: string;
+    dataType?: string;
+    options?: { id: string }[];
+  } | null;
+}
+
 interface RawBoard {
   node: {
     title: string;
     field: { id: string; options: { id: string; name: string }[] } | null;
+    views: {
+      nodes: {
+        layout: string;
+        sortByFields: { nodes: RawSortByField[] };
+      }[];
+    };
     items: {
       nodes: {
         id: string;
@@ -110,9 +207,71 @@ interface RawBoard {
             }
           | null;
         fieldValueByName: { optionId: string } | null;
+        fieldValues: { nodes: RawFieldValue[] };
       }[];
     };
   } | null;
+}
+
+/** Pull one comparable value out of a project field value node. */
+function fieldValueOf(v: RawFieldValue): string | number | null {
+  switch (v.__typename) {
+    case "ProjectV2ItemFieldTextValue":
+      return v.text ?? null;
+    case "ProjectV2ItemFieldNumberValue":
+      return v.number ?? null;
+    case "ProjectV2ItemFieldDateValue":
+      return v.date ?? null;
+    case "ProjectV2ItemFieldSingleSelectValue":
+      return v.optionId ?? null;
+    case "ProjectV2ItemFieldIterationValue":
+      return v.startDate ?? null;
+    default:
+      return null;
+  }
+}
+
+function sortKey(card: BoardCard, spec: SortSpec): string | number | null {
+  // TITLE is not a project field value; use the card title we already have.
+  if (spec.dataType === "TITLE") return card.title;
+  return card.sortValues[spec.fieldName] ?? null;
+}
+
+function compareBy(
+  a: string | number | null,
+  b: string | number | null,
+  spec: SortSpec
+): number {
+  // empty values always sort last, regardless of direction
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+
+  let cmp: number;
+  if (spec.dataType === "SINGLE_SELECT" && spec.optionOrder) {
+    // order by the option's configured position, not alphabetically
+    cmp =
+      spec.optionOrder.indexOf(a as string) -
+      spec.optionOrder.indexOf(b as string);
+  } else if (spec.dataType === "NUMBER") {
+    cmp = (a as number) - (b as number);
+  } else {
+    // DATE / ITERATION are ISO strings that sort lexically; TEXT/TITLE too
+    cmp = String(a).localeCompare(String(b));
+  }
+  return spec.direction === "DESC" ? -cmp : cmp;
+}
+
+function sortCards(cards: BoardCard[], sortBy: SortSpec[]): BoardCard[] {
+  if (sortBy.length === 0) return cards;
+  // stable sort with a multi-level comparator
+  return [...cards].sort((a, b) => {
+    for (const spec of sortBy) {
+      const c = compareBy(sortKey(a, spec), sortKey(b, spec), spec);
+      if (c !== 0) return c;
+    }
+    return 0;
+  });
 }
 
 export async function fetchBoard(
@@ -136,9 +295,28 @@ export async function fetchBoard(
   const node = data.node;
   if (!node) throw new Error("Project not found");
 
+  // read the sort config from the board view (fall back to the first view)
+  const views = node.views?.nodes ?? [];
+  const view =
+    views.find((v) => v.layout === "BOARD_LAYOUT") ?? views[0] ?? null;
+  const sortBy: SortSpec[] = (view?.sortByFields.nodes ?? [])
+    .filter((s) => s.field?.name && s.field?.dataType)
+    .map((s) => ({
+      fieldName: s.field!.name!,
+      direction: s.direction,
+      dataType: s.field!.dataType!,
+      optionOrder: s.field!.options?.map((o) => o.id),
+    }));
+
   const cards: BoardCard[] = node.items.nodes.map((item) => {
     const c = item.content;
     const kind = (c?.__typename as BoardCard["kind"]) ?? "Unknown";
+
+    const sortValues: Record<string, string | number | null> = {};
+    for (const v of item.fieldValues?.nodes ?? []) {
+      if (v.field?.name) sortValues[v.field.name] = fieldValueOf(v);
+    }
+
     return {
       itemId: item.id,
       // content is null when the token can't read that item's repository
@@ -149,6 +327,7 @@ export async function fetchBoard(
       url: c?.url,
       statusOptionId: item.fieldValueByName?.optionId ?? null,
       kind,
+      sortValues,
     };
   });
 
@@ -156,7 +335,8 @@ export async function fetchBoard(
     title: node.title,
     statusFieldId: node.field?.id ?? null,
     statusOptions: node.field?.options ?? [],
-    cards,
+    cards: sortCards(cards, sortBy),
+    sortBy,
   };
 }
 

@@ -18,6 +18,19 @@ export interface BoardCard {
   /** optionId of the current Status single-select value, or null if unset */
   statusOptionId: string | null;
   kind: "Issue" | "PullRequest" | "DraftIssue" | "Unknown";
+  /** field-name -> comparable value, used to replicate the web view's sort */
+  sortValues: Record<string, string | number | null>;
+}
+
+export type SortDirection = "ASC" | "DESC";
+
+export interface SortSpec {
+  fieldName: string;
+  direction: SortDirection;
+  /** ProjectV2FieldType, e.g. TITLE / TEXT / NUMBER / DATE / SINGLE_SELECT / ITERATION */
+  dataType: string;
+  /** for SINGLE_SELECT: option ids in their configured order */
+  optionOrder?: string[];
 }
 
 export interface BoardData {
@@ -26,4 +39,6 @@ export interface BoardData {
   statusFieldId: string | null;
   statusOptions: StatusOption[];
   cards: BoardCard[];
+  /** the board view's sort config, already applied to `cards` */
+  sortBy: SortSpec[];
 }
