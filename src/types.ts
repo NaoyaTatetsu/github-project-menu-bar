@@ -7,6 +7,8 @@ export interface ProjectSummary {
 export interface StatusOption {
   id: string;
   name: string;
+  /** GitHub single-select color enum, e.g. GRAY/BLUE/GREEN/… */
+  color?: string;
 }
 
 export interface BoardCard {
@@ -17,6 +19,8 @@ export interface BoardCard {
   url?: string;
   /** optionId of the current Status single-select value, or null if unset */
   statusOptionId: string | null;
+  /** GitHub color enum of the current status option, or null if unset */
+  statusColor: string | null;
   kind: "Issue" | "PullRequest" | "DraftIssue" | "Unknown";
   /** field-name -> comparable value, used to replicate the web view's sort */
   sortValues: Record<string, string | number | null>;

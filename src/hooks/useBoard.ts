@@ -50,10 +50,14 @@ export function useUpdateStatus(
       await qc.cancelQueries({ queryKey: key });
       const prev = qc.getQueryData<BoardData>(key);
       if (prev) {
+        const color =
+          prev.statusOptions.find((o) => o.id === optionId)?.color ?? null;
         qc.setQueryData<BoardData>(key, {
           ...prev,
           cards: prev.cards.map((c) =>
-            c.itemId === itemId ? { ...c, statusOptionId: optionId } : c
+            c.itemId === itemId
+              ? { ...c, statusOptionId: optionId, statusColor: color }
+              : c
           ),
         });
       }

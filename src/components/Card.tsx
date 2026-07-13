@@ -3,12 +3,22 @@ import { CSS } from "@dnd-kit/utilities";
 import { open } from "@tauri-apps/plugin-shell";
 import type { BoardCard } from "../types";
 
-const kindColor: Record<BoardCard["kind"], string> = {
-  Issue: "bg-green-500",
-  PullRequest: "bg-purple-500",
-  DraftIssue: "bg-gray-400",
-  Unknown: "bg-gray-300",
+// GitHub single-select option colors → CSS (mid tones that read on light+dark)
+const statusColorHex: Record<string, string> = {
+  GRAY: "#8b949e",
+  BLUE: "#539bf5",
+  GREEN: "#57ab5a",
+  YELLOW: "#daaa3f",
+  ORANGE: "#e0823d",
+  RED: "#e5534b",
+  PINK: "#e275ad",
+  PURPLE: "#986ee2",
 };
+
+function dotColor(status: string | null): string {
+  if (!status) return "#d0d7de"; // no status → neutral gray
+  return statusColorHex[status] ?? "#d0d7de";
+}
 
 export function Card({ card }: { card: BoardCard }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -30,7 +40,9 @@ export function Card({ card }: { card: BoardCard }) {
     >
       <div className="flex items-start gap-1.5">
         <span
-          className={`mt-1 h-2 w-2 shrink-0 rounded-full ${kindColor[card.kind]}`}
+          title={card.statusColor ?? "No Status"}
+          style={{ backgroundColor: dotColor(card.statusColor) }}
+          className="mt-1 h-2 w-2 shrink-0 rounded-full"
         />
         <span className="line-clamp-3 text-neutral-800 dark:text-neutral-100">
           {card.title}

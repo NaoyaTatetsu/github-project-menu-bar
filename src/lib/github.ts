@@ -64,6 +64,7 @@ const BOARD_QUERY = gql`
             options {
               id
               name
+              color
             }
           }
         }
@@ -188,7 +189,10 @@ interface RawSortByField {
 interface RawBoard {
   node: {
     title: string;
-    field: { id: string; options: { id: string; name: string }[] } | null;
+    field: {
+      id: string;
+      options: { id: string; name: string; color: string }[];
+    } | null;
     views: {
       nodes: {
         layout: string;
@@ -308,6 +312,10 @@ export async function fetchBoard(
       optionOrder: s.field!.options?.map((o) => o.id),
     }));
 
+  // map each Status option id to its color, for the card indicator
+  const colorByOption = new Map<string, string>();
+  for (const o of node.field?.options ?? []) colorByOption.set(o.id, o.color);
+
   const cards: BoardCard[] = node.items.nodes.map((item) => {
     const c = item.content;
     const kind = (c?.__typename as BoardCard["kind"]) ?? "Unknown";
@@ -317,6 +325,8 @@ export async function fetchBoard(
       if (v.field?.name) sortValues[v.field.name] = fieldValueOf(v);
     }
 
+    const statusOptionId = item.fieldValueByName?.optionId ?? null;
+
     return {
       itemId: item.id,
       // content is null when the token can't read that item's repository
@@ -325,7 +335,10 @@ export async function fetchBoard(
         "🔒 内容を取得できません（トークンにリポジトリ読み取り権限が必要）",
       number: c?.number,
       url: c?.url,
-      statusOptionId: item.fieldValueByName?.optionId ?? null,
+      statusOptionId,
+      statusColor: statusOptionId
+        ? colorByOption.get(statusOptionId) ?? null
+        : null,
       kind,
       sortValues,
     };
