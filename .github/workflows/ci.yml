@@ -3,7 +3,23 @@ name: CI
 on:
   push:
     branches: [develop]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Entitlements/**'
+      - 'project.yml'
+      - 'build.sh'
+      - 'test.sh'
+      - '.github/workflows/ci.yml'
   pull_request:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Entitlements/**'
+      - 'project.yml'
+      - 'build.sh'
+      - 'test.sh'
+      - '.github/workflows/ci.yml'
 
 concurrency:
   group: ci-${{ github.ref }}
