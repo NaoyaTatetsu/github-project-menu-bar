@@ -1,0 +1,65 @@
+name: GitHubProjectMenuBar
+options:
+  bundleIdPrefix: jp.4digit
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    # Swift 5 language mode — avoids Swift 6 strict-concurrency friction with
+    # WidgetKit's completion-based TimelineProvider. async/await still works.
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    # Free personal team (from `codesign -dv` TeamIdentifier). Enables CLI builds.
+    DEVELOPMENT_TEAM: "U76QJP73M4"
+    GENERATE_INFOPLIST_FILE: YES
+
+targets:
+  # ---- Menu bar app -------------------------------------------------------
+  GitHubProjectMenuBar:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/App
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: jp.4digit.GitHubProjectMenuBar
+        CODE_SIGN_ENTITLEMENTS: Entitlements/App.entitlements
+        # menu-bar-only app: no Dock icon, no main window
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+    dependencies:
+      - target: ProjectWidgetExtension
+        embed: true
+
+  # ---- WidgetKit extension ------------------------------------------------
+  ProjectWidgetExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Sources/Widget
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: jp.4digit.GitHubProjectMenuBar.ProjectWidget
+        CODE_SIGN_ENTITLEMENTS: Entitlements/Widget.entitlements
+    info:
+      path: Generated/Widget-Info.plist
+      properties:
+        CFBundleDisplayName: GitHub Project
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+schemes:
+  GitHubProjectMenuBar:
+    build:
+      targets:
+        GitHubProjectMenuBar: all
+    run:
+      config: Release
+    archive:
+      config: Release

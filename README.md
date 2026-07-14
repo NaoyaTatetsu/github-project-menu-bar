@@ -1,97 +1,68 @@
 # GitHub Project Menu Bar
 
-A macOS menu bar app (GitBoard-style) to browse and edit your **private GitHub Projects (v2)** boards. Built with **Tauri v2 + React + TypeScript**.
+A native macOS **menu bar app + WidgetKit widget** to browse and edit your
+private **GitHub Projects (v2)** boards. Built with **SwiftUI**.
 
-Click the tray icon → a compact kanban panel drops down. Drag cards between columns to update their **Status**; the change is written back to GitHub via the Projects v2 GraphQL API.
+- **Menu bar panel**: kanban board — drag cards between columns to change Status,
+  right-click to change Status, "+" to add a task, click a card to open it on
+  GitHub. Sorted to match the project view's configured sort.
+- **Widget** (Notification Center / desktop): status buttons across the top; tap
+  one to show that status's tasks. Read-only, refreshes on a timeline.
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| Shell | Tauri v2 (`tray-icon`, `tauri-plugin-positioner`) |
-| UI | React 19 + TypeScript + Vite + Tailwind CSS |
-| Drag & drop | `@dnd-kit` |
-| Data | `@tanstack/react-query` + `graphql-request` |
-| GitHub API | Projects v2 **GraphQL** (`viewer.projectsV2`, `updateProjectV2ItemFieldValue`) |
-| Token storage | **OS keychain** via the `keyring` crate (Rust commands) |
+| App | SwiftUI `MenuBarExtra` (menu-bar-only, no Dock icon) |
+| Widget | WidgetKit + interactive AppIntents |
+| GitHub API | Projects v2 **GraphQL** (URLSession) |
+| Token / shared state | OS **Keychain** (shared between app & widget) |
+| Project generation | [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`project.yml`) |
+
+## Layout
+
+```
+project.yml            XcodeGen spec (app + widget targets, one team)
+build.sh               CLI build → sign → install to /Applications → launch
+Entitlements/          App.entitlements / Widget.entitlements (sandbox, keychain, network)
+Sources/
+  Shared/              compiled into BOTH targets
+    AppConfig / TokenStore(+SharedStore, BoardCache) / Models
+    GitHubAPI (GraphQL + view-sort replication) / StatusColor
+    SelectStatusIntent (widget button intent — must be in the app too)
+  App/                 MenuBarExtra app: App / BoardViewModel / MenuContent / BoardView / SettingsView
+  Widget/              WidgetKit: BoardProvider / BoardWidgetView
+```
+
+The `.xcodeproj` and `Generated/` are produced by XcodeGen and are git-ignored;
+`project.yml` is the source of truth.
 
 ## Prerequisites
 
-All versions are pinned in [`mise.toml`](./mise.toml): **node**, **bun**,
-**rust**, and **typescript** (via mise's `npm:` backend).
-Install [mise](https://mise.jdx.dev), then:
+- Full **Xcode** installed
+- **XcodeGen** (`brew install xcodegen`)
+
+## Build & install (no need to open Xcode)
 
 ```bash
-mise install    # installs node, bun, rust, and typescript 7
+./build.sh
 ```
 
-> - mise's `rust` delegates to `rustup`, so the toolchain lives in `~/.rustup`
->   but its version is controlled by `mise.toml`.
-> - `typescript` is **not** a package.json dependency — it's provided on PATH by
->   mise (`npm:typescript`). Point your editor's TS SDK at the mise shim if you
->   want it to use the same version.
+This regenerates the project, builds a signed Release, installs it to
+`/Applications/GitHubProjectMenuBar.app`, and launches it.
 
-## Develop
+> Signed with a **free personal team** (`DEVELOPMENT_TEAM` in `project.yml`).
+> Free provisioning profiles expire after ~7 days — just re-run `./build.sh`.
+
+## Setup
+
+1. Click the menu bar icon → **⚙ Settings** → paste a GitHub **classic PAT**
+   with the `project` scope (and `repo` if your board draws from private repos).
+2. Pick a project → the board loads.
+3. Add the widget from **Edit Widgets** (Notification Center / desktop).
+
+## Open in Xcode (optional)
 
 ```bash
-bun install
-bun tauri dev
-```
-
-The tray icon appears in the menu bar. On first launch, open **⚙ Settings** and paste a GitHub token.
-
-### GitHub token (current auth: PAT)
-
-Create a **Fine-grained personal access token** with:
-
-- **Repository access**: the repos your project draws from (or *All*)
-- **Permissions → Projects**: **Read and write**
-
-Paste it into the app's settings screen. It's verified against `viewer.login` and stored locally.
-
-The token is stored in the **OS keychain** (macOS Keychain via the `keyring`
-crate) — never in plaintext on disk. Any token left over from an older build's
-plaintext `settings.json` is migrated into the keychain automatically on launch.
-
-> ⚠️ **Before distributing**, replace the pasted-PAT flow with **GitHub OAuth Device Flow** (no client secret needed for desktop). See `TODO` below.
-
-## Build
-
-```bash
-bun tauri build
-```
-
-Produces a `.app` / `.dmg` under `src-tauri/target/release/bundle/`. For distribution outside the App Store you'll need to **codesign + notarize** with an Apple Developer ID.
-
-> The frosted-glass look uses window vibrancy, which requires `macOSPrivateApi`
-> + transparent windows. This is fine for **Developer ID / DMG** distribution
-> but **not allowed on the Mac App Store**. To target the App Store, drop
-> `macOSPrivateApi`, set the windows back to `transparent: false`, remove the
-> `window-vibrancy` calls, and give the windows an opaque background.
-
-## Project layout
-
-```
-src/                 React frontend
-  lib/github.ts      Projects v2 GraphQL queries & mutations
-  lib/store.ts       keychain-backed token + selected-project persistence
-  hooks/useBoard.ts  react-query data hooks (optimistic status updates)
-  components/        Board / Column / Card / Settings / Widget
-src-tauri/
-  src/lib.rs         tray icon + panel toggle, dock hidden, keychain commands
-  tauri.conf.json    frameless, transparent, always-on-top panel window
-  capabilities/      permission grants for the panel window
-```
-
-## TODO / roadmap
-
-- [ ] OAuth Device Flow auth (for distribution)
-- [x] Store token in the OS keychain (`keyring` crate)
-- [x] Launch at login (`tauri-plugin-autostart`, toggle in Settings)
-- [x] Desktop widget window (frameless, always-on-top board summary; toggle from tray)
-- [ ] Edit card title / assignees / other fields, not just Status
-- [ ] Create draft issues from the panel
-- [ ] Global hotkey to toggle the panel
-- [ ] Auto-refresh / polling
-- [ ] App icon + tray icon polish (current icons are placeholders from `scripts/gen-icon.mjs`)
+xcodegen generate && open GitHubProjectMenuBar.xcodeproj
 ```
