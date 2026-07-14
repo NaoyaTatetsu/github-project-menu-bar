@@ -6,7 +6,7 @@ import Foundation
 /// through the shared Keychain (keychain-access-groups entitlement) instead.
 public enum AppConfig {
     /// Keychain service name shared by app + widget.
-    public static let keychainService = "jp.4digit.GitHubProjectMenuBar"
+    public static let keychainService = "jp.p-jihyo.GitHubProjectMenuBar"
     /// Keychain accounts for the shared values.
     public static let tokenAccount = "github-token"
     public static let projectAccount = "selected-project"

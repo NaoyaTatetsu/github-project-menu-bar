@@ -8,7 +8,7 @@
   <true/>
   <key>keychain-access-groups</key>
   <array>
-    <string>$(AppIdentifierPrefix)jp.4digit.GitHubProjectMenuBar</string>
+    <string>$(AppIdentifierPrefix)jp.p-jihyo.GitHubProjectMenuBar</string>
   </array>
 </dict>
 </plist>

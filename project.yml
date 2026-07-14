@@ -1,6 +1,6 @@
 name: GitHubProjectMenuBar
 options:
-  bundleIdPrefix: jp.4digit
+  bundleIdPrefix: jp.p-jihyo
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -27,7 +27,7 @@ targets:
       - Sources/Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: jp.4digit.GitHubProjectMenuBar
+        PRODUCT_BUNDLE_IDENTIFIER: jp.p-jihyo.GitHubProjectMenuBar
         CODE_SIGN_ENTITLEMENTS: Entitlements/App.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # menu-bar-only app: no Dock icon, no main window
@@ -46,7 +46,7 @@ targets:
       - Sources/Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: jp.4digit.GitHubProjectMenuBar.ProjectWidget
+        PRODUCT_BUNDLE_IDENTIFIER: jp.p-jihyo.GitHubProjectMenuBar.ProjectWidget
         CODE_SIGN_ENTITLEMENTS: Entitlements/Widget.entitlements
     info:
       path: Generated/Widget-Info.plist
