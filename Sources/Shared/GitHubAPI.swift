@@ -2,8 +2,10 @@ import Foundation
 
 // MARK: - Sort (replicating the GitHub Project view's configured sort)
 
+// (internal, not fileprivate, so the unit tests can reach them via @testable)
+
 /// One level of the view's sort configuration.
-fileprivate struct SortSpec {
+struct SortSpec: Equatable {
     let fieldName: String
     let direction: String  // "ASC" / "DESC"
     let dataType: String  // TITLE / TEXT / NUMBER / DATE / SINGLE_SELECT / ITERATION
@@ -11,20 +13,36 @@ fileprivate struct SortSpec {
 }
 
 /// A comparable value pulled from an item's field.
-fileprivate enum SortVal {
+enum SortVal: Equatable {
     case str(String)
     case num(Double)
     case none
 }
 
+/// Sort cards by the view's multi-level sort spec. `values[itemId][fieldName]`
+/// holds each card's field values. Pure function — the unit under test.
+func sortedCards(
+    _ cards: [Card], by sortBy: [SortSpec], values: [String: [String: SortVal]]
+) -> [Card] {
+    guard !sortBy.isEmpty else { return cards }
+    return cards.sorted { a, b in
+        for spec in sortBy {
+            let c = compareSort(sortKey(a, spec, values[a.itemId]),
+                                sortKey(b, spec, values[b.itemId]), spec)
+            if c != 0 { return c < 0 }
+        }
+        return false
+    }
+}
+
 /// Value used to sort a card for a given spec (TITLE uses the card title).
-fileprivate func sortKey(_ card: Card, _ spec: SortSpec, _ values: [String: SortVal]?) -> SortVal {
+func sortKey(_ card: Card, _ spec: SortSpec, _ values: [String: SortVal]?) -> SortVal {
     if spec.dataType == "TITLE" { return .str(card.title) }
     return values?[spec.fieldName] ?? SortVal.none
 }
 
 /// Negative if a < b, positive if a > b, 0 if equal (empty values sort last).
-fileprivate func compareSort(_ a: SortVal, _ b: SortVal, _ spec: SortSpec) -> Int {
+func compareSort(_ a: SortVal, _ b: SortVal, _ spec: SortSpec) -> Int {
     switch (a, b) {
     case (.none, .none): return 0
     case (.none, _): return 1
@@ -248,17 +266,7 @@ public struct GitHubAPI: Sendable {
             )
         }
 
-        let sorted = sortBy.isEmpty
-            ? cards
-            : cards.sorted { a, b in
-                for spec in sortBy {
-                    let va = sortKey(a, spec, valuesByItem[a.itemId])
-                    let vb = sortKey(b, spec, valuesByItem[b.itemId])
-                    let c = compareSort(va, vb, spec)
-                    if c != 0 { return c < 0 }
-                }
-                return false
-            }
+        let sorted = sortedCards(cards, by: sortBy, values: valuesByItem)
 
         return Board(
             title: node.title,

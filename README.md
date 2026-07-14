@@ -63,6 +63,14 @@ This regenerates the project, builds a signed Release, installs it to
 2. Pick a project → the board loads.
 3. Add the widget from **Edit Widgets** (Notification Center / desktop).
 
+## Tests
+
+Unit tests cover the Shared logic (view-sort replication, models):
+
+```bash
+./test.sh
+```
+
 ## Open in Xcode (optional)
 
 ```bash

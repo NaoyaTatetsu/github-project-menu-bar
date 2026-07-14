@@ -55,11 +55,27 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
+  # ---- Unit tests (Shared logic) -----------------------------------------
+  GitHubProjectMenuBarTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+    dependencies:
+      - target: GitHubProjectMenuBar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: jp.p-jihyo.GitHubProjectMenuBarTests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   GitHubProjectMenuBar:
     build:
       targets:
         GitHubProjectMenuBar: all
+    test:
+      targets:
+        - GitHubProjectMenuBarTests
     run:
       config: Release
     archive:
