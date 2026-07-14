@@ -29,6 +29,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: jp.4digit.GitHubProjectMenuBar
         CODE_SIGN_ENTITLEMENTS: Entitlements/App.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # menu-bar-only app: no Dock icon, no main window
         INFOPLIST_KEY_LSUIElement: YES
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
