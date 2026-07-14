@@ -1,5 +1,7 @@
 # GitHub Project Menu Bar
 
+English / [日本語](docs/README.ja.md)
+
 A native macOS **menu bar app + WidgetKit widget** to browse and edit your
 private **GitHub Projects (v2)** boards. Built with **SwiftUI**.
 
