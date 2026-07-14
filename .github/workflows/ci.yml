@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test (macOS)
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # No signing identity on CI: build & test unsigned. This compiles the app,
+      # the widget extension, and runs the Shared-logic unit tests.
+      - name: Build & test (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project GitHubProjectMenuBar.xcodeproj \
+            -scheme GitHubProjectMenuBar \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
