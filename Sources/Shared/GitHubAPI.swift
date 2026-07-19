@@ -177,10 +177,13 @@ public struct GitHubAPI: Sendable {
                 let title: String?
                 let number: Int?
                 let url: String?
+                let labels: LabelConn?
                 enum CodingKeys: String, CodingKey {
-                    case typename = "__typename", title, number, url
+                    case typename = "__typename", title, number, url, labels
                 }
             }
+            struct LabelConn: Decodable { let nodes: [LabelNode] }
+            struct LabelNode: Decodable { let name: String; let color: String? }
             struct StatusValue: Decodable { let optionId: String? }
             struct FieldValues: Decodable { let nodes: [FieldValueNode] }
             struct FieldValueNode: Decodable {
@@ -188,6 +191,8 @@ public struct GitHubAPI: Sendable {
                 let number: Double?
                 let date: String?
                 let optionId: String?
+                let name: String?  // single-select option name
+                let color: String?  // single-select option color enum
                 let startDate: String?
                 let field: FieldNameOnly?
             }
@@ -210,8 +215,8 @@ public struct GitHubAPI: Sendable {
           items(first:100){ nodes {
             id
             content { __typename
-              ... on Issue { title number url }
-              ... on PullRequest { title number url }
+              ... on Issue { title number url labels(first:10){ nodes { name color } } }
+              ... on PullRequest { title number url labels(first:10){ nodes { name color } } }
               ... on DraftIssue { title }
             }
             fieldValueByName(name:"Status"){ ... on ProjectV2ItemFieldSingleSelectValue { optionId } }
@@ -219,7 +224,7 @@ public struct GitHubAPI: Sendable {
               ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
               ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } }
               ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } }
-              ... on ProjectV2ItemFieldSingleSelectValue { optionId field { ... on ProjectV2FieldCommon { name } } }
+              ... on ProjectV2ItemFieldSingleSelectValue { optionId name color field { ... on ProjectV2FieldCommon { name } } }
               ... on ProjectV2ItemFieldIterationValue { startDate field { ... on ProjectV2FieldCommon { name } } }
             } }
           } }
@@ -246,6 +251,9 @@ public struct GitHubAPI: Sendable {
         var valuesByItem: [String: [String: SortVal]] = [:]
         let cards = node.items.nodes.map { item -> Card in
             var values: [String: SortVal] = [:]
+            var priority: String?
+            var priorityColor: String?
+            var endDate: String?
             for v in item.fieldValues?.nodes ?? [] {
                 guard let name = v.field?.name else { continue }
                 if let t = v.text { values[name] = .str(t) }
@@ -253,8 +261,19 @@ public struct GitHubAPI: Sendable {
                 else if let d = v.date { values[name] = .str(d) }
                 else if let o = v.optionId { values[name] = .str(o) }
                 else if let s = v.startDate { values[name] = .str(s) }
+
+                if name.caseInsensitiveCompare("Priority") == .orderedSame, let optName = v.name {
+                    priority = optName
+                    priorityColor = v.color
+                }
+                if name.caseInsensitiveCompare("End Date") == .orderedSame, let d = v.date {
+                    endDate = d
+                }
             }
             valuesByItem[item.id] = values
+            let labels = (item.content?.labels?.nodes ?? []).map {
+                CardLabel(name: $0.name, color: $0.color)
+            }
             return Card(
                 itemId: item.id,
                 title: item.content?.title
@@ -262,7 +281,11 @@ public struct GitHubAPI: Sendable {
                 number: item.content?.number,
                 url: item.content?.url,
                 statusOptionId: item.fieldValueByName?.optionId,
-                kind: CardKind(typename: item.content?.typename)
+                kind: CardKind(typename: item.content?.typename),
+                labels: labels,
+                priority: priority,
+                priorityColor: priorityColor,
+                endDate: endDate
             )
         }
 

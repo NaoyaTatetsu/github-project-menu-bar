@@ -15,12 +15,14 @@
 
 **Menu bar panel** — a kanban board. Drag cards between columns to change Status,
 right-click to change Status, "+" to add a task, click a card to open it on GitHub.
+Each card also shows its labels, Priority, and End Date.
 
 <p align="center">
   <img src="docs/images/menubar.png" width="720" alt="Menu bar kanban panel">
 </p>
 
-**Widget** — status buttons across the top; tap one to show that status's tasks.
+**Widget** — status buttons across the top; tap one to show that status's tasks,
+each with its Priority and End Date.
 
 <p align="center">
   <img src="docs/images/widget.png" width="380" alt="Notification Center widget">
@@ -31,6 +33,7 @@ right-click to change Status, "+" to add a task, click a card to open it on GitH
 - **Kanban board** in the menu bar: view, drag-and-drop Status changes, add tasks (draft issues), open items on GitHub.
 - **Sorted like GitHub**: cards follow the project view's configured sort.
 - **Status colors**: each card shows its Status color dot.
+- **Card details**: labels, Priority, and End Date shown on each card (Priority in the widget too).
 - **Interactive widget**: pick a status, see its tasks — read-only, auto-refreshing.
 - **Menu-bar-only**: no Dock icon; the panel drops down from the menu bar.
 
@@ -110,6 +113,9 @@ xcodegen generate && open GitHubProjectMenuBar.xcodeproj
 
 - **Manual drag order** (no configured sort) can't be reproduced — the GitHub API
   doesn't expose it. Only **field-based sorts** match.
+- **Card fields**: Priority reads from a single-select field named `Priority`, and
+  End Date from a date field named `End Date` (both case-insensitive). Labels come
+  from the issue/PR itself, so **draft issues show no labels**.
 - The widget is **read-only** (WidgetKit); it refreshes on a timeline, and status
   switching renders instantly from a cache.
 - Built for **personal use on your own Mac** with a free team — not for

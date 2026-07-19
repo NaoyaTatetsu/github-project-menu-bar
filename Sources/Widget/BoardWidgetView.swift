@@ -56,9 +56,22 @@ struct BoardWidgetView: View {
                 Text("タスクなし").font(.caption2).foregroundStyle(.secondary)
             } else {
                 ForEach(cards.prefix(10)) { card in
-                    Text("• \(card.title)")
-                        .font(.system(size: 13))
-                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text("• \(card.title)")
+                            .font(.system(size: 13))
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        if let priority = card.priority {
+                            Text(priority)
+                                .font(.system(size: 10)).bold()
+                                .foregroundStyle(statusColor(card.priorityColor))
+                        }
+                        if let end = card.endDate {
+                            Text(formatProjectDate(end))
+                                .font(.system(size: 10))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 if cards.count > 10 {
                     Text("他 \(cards.count - 10) 件")
